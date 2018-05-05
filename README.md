@@ -6,4 +6,5 @@
     <script src="src/lib/pixi.js"></script>
     <script>
     </script>
+    <h1>看效果<a href="https://haoyuan336.github.io/glsl-learn/">看效果</a></h1>
 </body>
