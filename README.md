@@ -1,5 +1,5 @@
 # glsl-learn
-学习glsl语言
+学习glsl语言<h1>进群技术交流:319058222 </h1>
 <h1>第一步: Clone 代码 </h1>
 <h1>第二步:运行命令 npm install </h1>
 <h1>第三步:运行命令 webpack</h1>
