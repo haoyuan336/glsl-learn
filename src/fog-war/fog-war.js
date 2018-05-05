@@ -10,6 +10,7 @@ const FogWar = function (render) {
     let image = new PIXI.Sprite.fromImage('./images/bg.jpg');
     _render.addChild(image);
 
+    image.scale.set(2);
     let shaderCode = "" +
         "uniform vec2 mouse;" +
         "uniform vec2 resolution;" +

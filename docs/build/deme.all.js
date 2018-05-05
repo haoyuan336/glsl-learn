@@ -8993,6 +8993,7 @@
 	    var image = new PIXI.Sprite.fromImage('./images/bg.jpg');
 	    _render.addChild(image);
 	
+	    image.scale.set(2);
 	    var shaderCode = "" + "uniform vec2 mouse;" + "uniform vec2 resolution;" + "void main(){" + "vec2 p = (gl_FragCoord.xy - mouse.xy)/min(resolution.x, resolution.y);" + "gl_FragColor=vec4(0.0,0.0,0.0,1.0 * length(p));" + "}";
 	
 	    var shader = new PIXI.Filter("", shaderCode);
