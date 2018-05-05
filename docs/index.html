@@ -4,7 +4,37 @@
     <meta charset="UTF-8">
     <title>Title</title>
 </head>
-<body>
+<style>
+    .container{
+        margin:0 auto;
+        width:800px;
+    }
+    #canvas1{
+        border:1px solid black;
+    }
+    .canvas{
+        border:1px solid black;
+    }
+</style>
+<body class="container">
+<script src="libs/pixi.js"></script>
+<script src="libs/Tween.js"></script>
+<script src="build/deme.all.js"></script>
+<h1>战争迷雾效果</h1>
+<canvas id="canvas1" class="canvas" width="800" height="480px">
+    <script>
+        console.log('渲染画布');
+       let game =  window.gamePlatform.createGame(document.getElementById('canvas1'), ()=>{
+           window.gamePlatform.createFogGame(game);
+       });
 
+    </script>
+</canvas>
+<h1>第二个效果</h1>
+<canvas class="canvas" id="canvas2" width="800" height="480">
+    <script>
+        window.gamePlatform.createGame(document.getElementById('canvas2'));
+    </script>
+</canvas>
 </body>
 </html>

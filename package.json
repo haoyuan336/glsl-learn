@@ -1,14 +1,23 @@
 {
-  "name": "glslxuexi",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "glslLearn",
+  "version": "0.0.1",
+  "private": true,
+  "devDependencies": {
+    "babel-core": "6.21.0",
+    "babel-loader": "6.2.10",
+    "babel-polyfill": "6.20.0",
+    "babel-preset-env": "^1.6.1",
+    "ftp": "^0.3.10",
+    "google-protobuf": "3.3.0",
+    "mp3-duration": "^1.1.0",
+    "request": "^2.83.0",
+    "webpack": "1.14.0"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "pixi.js": "^4.7.3"
+    "@tweenjs/tween.js": "github:tweenjs/tween.js",
+    "pixi-particles": "^2.1.9",
+    "pixi-spine": "^1.5.9",
+    "pixi.js": "^4.6.1",
+    "pixi-multistyle-text": "^0.6.0"
   }
 }
