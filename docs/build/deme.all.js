@@ -8893,36 +8893,48 @@
 	
 	var _fogWar2 = _interopRequireDefault(_fogWar);
 	
+	var _vectorShaderLearn = __webpack_require__(329);
+	
+	var _vectorShaderLearn2 = _interopRequireDefault(_vectorShaderLearn);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var GamePlatform = function GamePlatform() {
 	    var that = {};
 	    that.createGame = function (canvas, cb) {
 	        console.log('创建一个游戏' + canvas.width);
-	        var render = new PIXI.WebGLRenderer(canvas.width, canvas.height, { view: canvas });
+	        var app = new PIXI.Application(canvas.width, canvas.height, { view: canvas });
 	
 	        var stage = new PIXI.Container();
 	
-	        var ticker = new PIXI.ticker.Ticker();
-	        ticker.stop();
-	        ticker.add(function (deltaTime) {
-	            render.render(stage);
-	            // do something every frame
-	            if (render.update) {
-	                render.update(deltaTime);
+	        // const ticker = new PIXI.ticker.Ticker();
+	        // ticker.stop();
+	        // ticker.add((deltaTime) => {
+	        //     render.render(stage);
+	        //     // do something every frame
+	        //     if (render.update){
+	        //         render.update(deltaTime);
+	        //     }
+	        // });
+	        // ticker.start();
+	
+	        app.ticker.add(function (deltaTime) {
+	            app.renderer.render(stage);
+	            if (app.update) {
+	                app.update(deltaTime);
 	            }
 	        });
-	        ticker.start();
 	
-	        var loader = new PIXI.loaders.Loader();
+	        var loader = PIXI.Loader.shared;
 	        if (!loader.resources.hasOwnProperty('bg')) {
 	            loader.add('bg', './images/bg.jpg');
 	        }
 	        loader.load(function () {
 	            console.log('load success');
-	            var image = new PIXI.Sprite(loader.resources['bg'].texture);
-	            image.scale.set(canvas.height / image.height);
-	            stage.addChild(image);
+	            var image = new PIXI.Sprite.from('./images/bg.jpg');
+	            // image.scale.set(canvas.height / image.height);
+	            // stage.addChild(image);
+	            app.stage.addChild(image);
 	            if (cb) {
 	                cb();
 	            }
@@ -8931,43 +8943,47 @@
 	        var touchStart = function touchStart(event) {
 	            console.log('点击');
 	            var data = event.data.getLocalPosition(stage);
-	            if (render.touchStart) {
-	                render.touchStart(data);
+	            if (app.touchStart) {
+	                app.touchStart(data);
 	            }
 	        };
 	        var touchMove = function touchMove(event) {
-	            // console.log('移动');
+	            console.log('移动');
 	            var data = event.data.getLocalPosition(stage);
-	            if (render.touchMove) {
-	                render.touchMove(data);
+	            if (app.touchMove) {
+	                app.touchMove(data);
 	            }
 	        };
 	        var touchEnd = function touchEnd(event) {
 	            // console.log('点击结束');
 	            var data = event.data.getLocalPosition(stage);
-	            if (render.touchEnd) {
-	                render.touchEnd(data);
+	            if (app.touchEnd) {
+	                app.touchEnd(data);
 	            }
 	        };
-	        stage.interactive = true;
-	        stage.on('touchstart', touchStart);
-	        stage.on('pointerstart', touchStart);
-	        stage.on('touchmove', touchMove);
-	        stage.on('pointermove', touchMove);
-	        stage.on('touchend', touchEnd);
-	        stage.on('pointerend', touchEnd);
+	        app.stage.interactive = true;
+	        app.stage.on('touchstart', touchStart);
+	        app.stage.on('pointerdown', touchStart);
+	        app.stage.on('touchmove', touchMove);
+	        app.stage.on('pointermove', touchMove);
+	        app.stage.on('touchend', touchEnd);
+	        app.stage.on('pointerup', touchEnd);
 	
-	        render.addChild = function (node) {
-	            stage.addChild(node);
+	        app.addChild = function (node) {
+	            app.stage.addChild(node);
 	        };
 	
-	        return render;
+	        return app;
 	    };
 	
 	    that.createFogGame = function (render) {
-	        //创建一个战争迷雾
+	        // 创建一个战争迷雾
 	        var fogGame = (0, _fogWar2.default)(render);
 	        return fogGame;
+	    };
+	    that.createVectorShaderLearn = function (render) {
+	        var game = (0, _vectorShaderLearn2.default)(render);
+	        return game;
 	    };
 	
 	    return that;
@@ -8984,43 +9000,92 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	var FogWar = function FogWar(render) {
+	var FogWar = function FogWar(app) {
 	    var that = {};
-	    var _render = render;
-	    _render.update = function (dt) {};
+	    var _app = app;
 	
 	    // 接入shader
-	    var image = new PIXI.Sprite.fromImage('./images/bg.jpg');
-	    _render.addChild(image);
+	    // let image = new PIXI.Sprite.from('./images/bg.jpg');
+	    // _app.addChild(image);
 	
-	    image.scale.set(2);
-	    var shaderCode = "" + "uniform vec2 mouse;" + "uniform vec2 resolution;" + "void main(){" + "vec2 p = (gl_FragCoord.xy - mouse.xy)/min(resolution.x, resolution.y);" + "gl_FragColor=vec4(0.0,0.0,0.0,1.0 * length(p));" + "}";
+	    var shaderCode = "" + "uniform vec2 mouse;" + "uniform vec2 resolution;" + "uniform float time;" + "uniform sampler2D uSampler2;" + "void main(){" + "vec2 p = (gl_FragCoord.xy - mouse.xy)/min(resolution.x, resolution.y);" + "" + "gl_FragColor = texture2D(uSampler2, vUvs);" + "}";
 	
-	    var shader = new PIXI.Filter("", shaderCode);
-	    image.filters = [shader];
-	    var resolution = shader.uniforms.resolution;
-	    resolution[0] = render.view.width;
-	    resolution[1] = render.view.height;
-	    shader.uniforms.resoltuion = resolution;
-	
-	    _render.touchStart = function (data) {
-	        // console.log('touch start = ' + JSON.stringify(data));
+	    var unifroms = {
+	        resolution: {
+	            x: 0,
+	            y: 0
+	        },
+	        mouse: {
+	            x: 0,
+	            y: 0
+	        },
+	        time: 0,
+	        uSampler2: PIXI.Texture.from('./images/bg.jpg')
 	    };
 	
-	    _render.touchMove = function (data) {
-	        // console.log('touch move = ' + JSON.stringify(data));
-	        var mouse = shader.uniforms.mouse;
-	        mouse[0] = data.x;
-	        mouse[1] = render.view.height - data.y;
-	        shader.uniforms.mouse = mouse;
-	    };
-	    _render.touchEnd = function (data) {
-	        // console.log('touch end = ' + JSON.stringify(data));
+	    var shader = new PIXI.Shader.from("", shaderCode, unifroms);
+	    app.addChild(shader);
+	    // image.filters = [shader];
+	    // let resolution = shader.uniforms.resolution;
+	    // resolution[0] = app.view.width;
+	    // resolution[1] = app.view.height;
+	
+	    // shader.uniforms.resoltuion = {
+	    //     x: app.view.width,
+	    //     y: app.view.height
+	    // };
+	
+	
+	    _app.touchStart = function (data) {
+	        console.log('touch start = ' + JSON.stringify(data));
 	    };
 	
+	    _app.touchMove = function (data) {
+	        // let mouse = shader.uniforms.mouse;
+	        // mouse[0] = data.x;
+	        // mouse[1] = app.view.height - data.y;
+	        shader.uniforms.mouse = [data.x, app.view.height - data.y];
+	    };
+	    _app.touchEnd = function (data) {};
+	    _app.update = function (dt) {
+	
+	        shader.uniforms.time += dt;
+	    };
 	    return that;
 	};
 	exports.default = FogWar;
+
+/***/ },
+/* 329 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	var Game = function Game(render) {
+	    console.log('创建一个 顶点着色器的游戏');
+	    var that = {};
+	    var _render = render;
+	    var geometry = new PIXI.Geometry().addAttribute('aVertexPosition', [-100, -50, 100, -50, 0, 100]);
+	    var shader = new PIXI.Shader.from('\n\n    precision mediump float;\n    attribute vec2 aVertexPosition;\n\n    uniform mat3 translationMatrix;\n    uniform mat3 projectionMatrix;\n\n    void main() {\n        gl_Position = vec4((projectionMatrix * translationMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);\n    }', 'precision mediump float;\n\n    void main() {\n        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    }\n\n');
+	    var triangle = new PIXI.RawMesh(geometry, shader);
+	
+	    triangle.position.set(400, 300);
+	
+	    _render.addChild(triangle);
+	    var image = new PIXI.Sprite.fromImage('./images/bg.jpg');
+	
+	    render.addChild(image);
+	
+	    image.filters = [shader];
+	
+	    _render.update = function (dt) {};
+	
+	    return that;
+	};
+	exports.default = Game;
 
 /***/ }
 /******/ ]);

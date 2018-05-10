@@ -5,37 +5,188 @@
     <title>Title</title>
 </head>
 <style>
-    .container{
-        margin:0 auto;
-        width:800px;
-    }
-    #canvas1{
-        border:1px solid black;
-    }
-    .canvas{
-        border:1px solid black;
+    canvas {
+        border: thin dotted #FF0000;
     }
 </style>
-<body class="container">
-<script src="libs/pixi.js"></script>
-<script src="libs/Tween.js"></script>
-<script src="build/deme.all.js"></script>
-<h1>战争迷雾效果</h1>
-<canvas id="canvas1" class="canvas" width="800" height="480px">
-    <script>
-        console.log('渲染画布');
-       let game =  window.gamePlatform.createGame(document.getElementById('canvas1'), ()=>{
-           window.gamePlatform.createFogGame(game);
-       });
+<body>
+<canvas id="c" width="400px" height="300px">
 
-    </script>
 </canvas>
-<h1>第二个效果,开发中</h1>
-<canvas class="canvas" id="canvas2" width="800" height="480">
-    <script>
-        window.gamePlatform.createGame(document.getElementById('canvas2'));
-    </script>
-</canvas>
-<h1>还有更多特效尽情期待。。。</h1>
+<script id="2d-vertex-shader" type="x-shader/x-vertex">
+    //一个属性变量，将会从缓冲中获取数据
+    attribute vec2 a_position;
+    uniform vec2 u_resolution;
+
+    void main(){
+    //从像素坐标转换到 0.0 到1.0
+    vec2 zeroToOne  = a_position / u_resolution;
+    //再把0-1 转换成0-2
+    vec2 zeroToTwo = zeroToOne * 2.0;
+    //再把0-2 转换成 -1 -+1
+    vec2 clipSpace = zeroToTwo - 1.0;
+    gl_Position = vec4(clipSpace * vec2(1, -1), 0,1);
+    }
+
+
+
+</script>
+<script id="2d_fragment-shader" type="x-shader/x-fragment">
+    precision mediump float;
+    uniform vec4 u_color;
+    void main(){
+        gl_FragColor = u_color; //返回 紫色
+    }
+
+
+
+</script>
+
+
+<script>
+    let canvas = document.getElementById('c');
+    let gl = canvas.getContext('webgl');
+    if (!gl) {
+        //不能使用gl
+
+    }
+
+    function createProgram(gl, vertexShader, fragmentShader) {
+        var program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        let success = gl.getProgramParameter(program, gl.LINK_STATUS);
+        if (success) {
+            return program;
+        }
+        console.log('failed' + gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+    }
+
+    function createShader(gl, type, source) {
+        let shader = gl.createShader(type); //创建 着色器对象
+        gl.shaderSource(shader, source); //提供数据源
+        gl.compileShader(shader);  //编译 -- 生产着色器
+        let success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+        if (success) {
+            return shader;
+        }
+        //编译失败 删掉shder
+        console.log(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+    }
+
+
+    function setRectangle(gl, x, y, width, height) {
+        let x1 = x;
+        let x2 = x + width;
+        let y1 = y;
+        let y2 = y + height;
+        //注意  gl.bufferData  将会影响到 当前绑定 点 ArrayBuffer 的 绑定缓冲
+        //目前我们只有一个缓冲，如果我们有多个缓冲
+        //我们需要先将所需要缓冲绑定到 ARRAY_BUFFER
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            x1, y1,
+            x2, y1,
+            x1, y2,
+            x1, y2,
+            x2, y1,
+            x2, y2
+        ]), gl.STATIC_DRAW);
+    }
+
+    function randomInt(range) {
+        return Math.floor(Math.random() * range);
+    }
+
+    let vertexShaderSource = document.getElementById('2d-vertex-shader').innerHTML;
+    let fragmentShaderSource = document.getElementById('2d_fragment-shader').innerHTML;
+    let vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    let fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    let program = createProgram(gl, vertexShader, fragmentShader);
+    let positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+
+
+    let positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    //通过绑定点向缓冲区中存放数据
+    var positions = [
+        10, 20,
+        80, 20,
+        10, 30,
+        10, 30,
+        80, 20,
+        80, 30
+    ];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+    //static draw 会根据提示做出一些优化
+
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    // gl.clearColor(0, 0, 0, 0);
+    // gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(program);
+    let offset = 0; // 从缓冲区位置开始读取
+
+    gl.enableVertexAttribArray(positionAttributeLocation);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    // //告诉属性怎么从头positionBuffer中读取数据
+    let size = 2; // 每次迭代运行提取两个单位数据
+    let type = gl.FLOAT; //每个单位的数据类型是32位浮点型
+    let normalize = false; //不需要归一化数据
+    let stride = 0; // 0 = 移动单位数量 * 每个单位占用内存
+    // // 每次迭代运行运动多少内存到下一个数据开始点
+    gl.vertexAttribPointer(
+        positionAttributeLocation,
+        size,
+        type,
+        normalize,
+        stride,
+        offset
+    );
+
+
+    let resolutionUniformLocation = gl.getUniformLocation(program, 'u_resolution');
+
+    gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+
+
+    let primitiveType = gl.TRIANGLES;
+    let count = 6;
+
+
+    let colorUniformLocation = gl.getUniformLocation(program, 'u_color');
+    // //绘制50个随机颜色的矩形
+    // for (let i = 0 ; i < 50 ; i ++){
+    //     setRectangle(gl, randomInt(300), randomInt(300), randomInt(300), randomInt(300));
+    //     gl.uniform4f(colorUniformLocation, Math.random() , Math.random(), Math.random(), 1);
+    //     gl.drawArrays(primitiveType, offset, count);
+    //
+    // }
+
+
+    // gl.uniform4f(colorUniformLocation, Math.random(), Math.random(), Math.random(), 1);
+
+    let old =  new Date().getTime();
+    console.log('run' + old);
+
+    for (let i = 0; i < 1000; i++) {
+
+        for (let j = 0; j < 1000; j++) {
+            setRectangle(gl, 1 * i, 1 * j, 1,1);
+            gl.uniform4f(colorUniformLocation, Math.random(), Math.random(), 1, 1);
+            gl.drawArrays(primitiveType, offset,count);
+        }
+    }
+
+
+
+
+
+    console.log('over' + (new Date().getTime() - old));
+
+
+</script>
+
 </body>
 </html>

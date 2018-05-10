@@ -15,9 +15,10 @@
   },
   "dependencies": {
     "@tweenjs/tween.js": "github:tweenjs/tween.js",
+    "pixi-gl-core": "^1.1.4",
+    "pixi-multistyle-text": "^0.6.0",
     "pixi-particles": "^2.1.9",
     "pixi-spine": "^1.5.9",
-    "pixi.js": "^4.6.1",
-    "pixi-multistyle-text": "^0.6.0"
+    "pixi.js": "^4.7.3"
   }
 }
